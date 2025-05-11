@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics Interactive Quiz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .quiz-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .question {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .options {
+            margin-left: 20px;
+        }
+        
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            width: 100px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .result {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .score-display {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .question-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .nav-button {
+            padding: 8px 15px;
+        }
+        
+        .section-title {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .section-description {
+            font-style: italic;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Statistics Interactive Quiz</h1>
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+    
+    <div id="intro-screen">
+        <h2>Welcome to the Statistics Quiz!</h2>
+        <p>This quiz contains 24 questions divided into two sections:</p>
+        <ul>
+            <li><strong>Section A</strong>: Data Representation (12 questions on dot diagrams, stem-and-leaf plots, histograms, and frequency tables)</li>
+            <li><strong>Section B</strong>: Central Tendency (12 questions on mean, median, and mode)</li>
+        </ul>
+        <button id="start-quiz">Start Quiz</button>
+    </div>
+    
+    <div id="quiz-container" class="hidden">
+        <div id="section-a" class="hidden">
+            <div class="section-title">Section A: Data Representation</div>
+            <div class="section-description">Questions about dot diagrams, stem-and-leaf plots, histograms, and frequency tables</div>
+            <div id="questions-a"></div>
+        </div>
+        <div id="section-b" class="hidden">
+            <div class="section-title">Section B: Central Tendency</div>
+            <div class="section-description">Questions about mean, median, and mode</div>
+            <div id="questions-b"></div>
+        </div>
+        <div class="question-navigation">
+            <button id="prev-question" class="nav-button">Previous</button>
+            <button id="next-question" class="nav-button">Next</button>
+        </div>
+    </div>
+    
+    <div id="results-screen" class="hidden">
+        <h2>Quiz Results</h2>
+        <div class="score-display">
+            Your score: <span id="final-score">0</span>/24
+        </div>
+        <div class="score-display">
+            Section A: <span id="section-a-score">0</span>/12<br>
+            Section B: <span id="section-b-score">0</span>/12
+        </div>
+        <div id="detailed-results"></div>
+        <button id="restart-quiz">Take Quiz Again</button>
+    </div>
+
+    <script>
+        const sectionAQuestions = [
+            {
+                question: "1. Create a dot diagram for these book borrowing counts: 0, 1, 1, 2, 2, 2, 3, 4. How many dots would be above '2'?",
+                type: "number",
+                answer: "3",
+                explanation: "There are three instances of '2' in the data, so the dot diagram would have three dots above '2'."
+            },
+            {
+                question: "2. For the test scores: 12, 15, 16, 16, 18, 20, 21, 22, how many stems would a stem-and-leaf plot have if using 10s as stems?",
+                type: "number",
+                answer: "2",
+                explanation: "The stems would be 1 (10s), and 2 (20s) - totaling 2 stems."
+            },
+            {
+                question: "3. In a histogram showing weekly rainfall (0-10mm, 10-20mm, 20-30mm) with frequencies 4, 7, 5 respectively, which bin has the tallest bar?",
+                type: "number",
+                answer: "10",
+                explanation: "The 10-20mm bin has the highest frequency (7), so its bar would be tallest."
+            },
+            {
+                question: "4. For this frequency table of goals scored: 0 (5 matches), 1 (8), 2 (4), 3 (3), how many matches are represented in total?",
+                type: "number",
+                answer: "20",
+                explanation: "Sum all frequencies: 5 + 8 + 4 + 3 = 20 matches."
+            },
+            {
+                question: "5. In a dot diagram of temperatures: 18, 20, 22, 22, 23, 24, 25, how many temperatures are above 22?",
+                type: "number",
+                answer: "4",
+                explanation: "23, 24, 25, and one of the 22s (since 22 is not above 22) - total 4 values."
+            },
+            {
+                question: "6. For a stem-and-leaf plot of ages: 12, 15, 17, 21, 21, 23, 25, how many leaves would the '2' stem have?",
+                type: "number",
+                answer: "4",
+                explanation: "The '2' stem would have leaves: 1,1,3,5 (from ages 21,21,23,25)."
+            },
+            {
+                question: "7. In a histogram with bins 0-10, 10-20, 20-30 and frequencies 3, 9, 8, what percentage of data is in the first two bins?",
+                type: "number",
+                answer: "60",
+                explanation: "(3 + 9) / (3 + 9 + 8) x 100 = 12/20x100 = 60%."
+            },
+            {
+                question: "8. For this frequency table of pets: 0 (3 students), 1 (5), 2 (4), how many pets are represented in total?",
+                type: "number",
+                answer: "13",
+                explanation: "(0×3) + (1×5) + (2×4) = 0 + 5 + 8 = 13 pets."
+            },
+            {
+                question: "9. In a dot diagram of quiz scores: 4, 5, 5, 6, 6, 6, 7, how many dots would be above 5 or higher?",
+                type: "number",
+                answer: "6",
+                explanation: "There are 6 scores ≥5 (two 5s, three 6s, one 7)."
+            },
+            {
+                question: "10. A stem-and-leaf plot shows 3|5 represents 35. What would 4|2 represent?",
+                type: "number",
+                answer: "42",
+                explanation: "In stem-and-leaf notation, 4|2 represents 42 (stem = tens, leaf = units)."
+            },
+            {
+                question: "11. In a histogram with equal bin widths, if the 30-40 bin has frequency density 0.8, how many items are in this bin?",
+                type: "number",
+                answer: "8",
+                explanation: "Frequency = Frequency Density × Bin Width = 0.8 × 10 = 8."
+            },
+            {
+                question: "12. For this frequency table of siblings: 0 (8), 1 (12), 2 (6), 3 (4), how many students have fewer than 2 siblings?",
+                type: "number",
+                answer: "20",
+                explanation: "Students with 0 or 1 sibling: 8 + 12 = 16."
+            }
+        ];
+
+        const sectionBQuestions = [
+            {
+                question: "13. Calculate the mean of these numbers: 5, 7, 9, 14, 15",
+                type: "number",
+                answer: "10",
+                explanation: "Sum = 5+7+9+14+15 = 50. Mean = 50/5 = 10."
+            },
+            {
+                question: "14. Find the median of: 8, 10, 12, 14, 16, 18",
+                type: "number",
+                answer: "13",
+                explanation: "For even count, median = average of middle two: (12+14)/2 = 13."
+            },
+            {
+                question: "15. Identify the mode of: 2, 3, 3, 4, 4, 4, 5, 5",
+                type: "number",
+                answer: "4",
+                explanation: "4 appears most frequently (three times)."
+            },
+            {
+                question: "16. The mean of 5 numbers is 6. Four numbers are 3,5,7,9. Find the fifth number.",
+                type: "number",
+                answer: "6",
+                explanation: "Total sum = 5×6 = 30. Missing number = 30 - (3+5+7+9) = 6."
+            },
+            {
+                question: "17. Find the median of: 22, 24, 26, 28, 30, 32, 34, 36, 38",
+                type: "number",
+                answer: "30",
+                explanation: "For odd count, median is the middle value (5th of 9)."
+            },
+            {
+                question: "18. What is the mode of: red, blue, blue, green, red, red, yellow?",
+                type: "text",
+                answer: "red",
+                explanation: "'red' appears three times, more than any other color."
+            },
+            {
+                question: "19. The mean of a,b,c is 10. The mean of a,b,c,d is 12. Find d.",
+                type: "number",
+                answer: "18",
+                explanation: "Original sum = 30. New sum = 48. So d = 48-30 = 18."
+            },
+            {
+                question: "20. Find the median of: 11, 13, 15, 17, 19, 21, 23, 25, 27, 29",
+                type: "number",
+                answer: "20",
+                explanation: "For even count, median = average of 5th and 6th values: (19+21)/2 = 20."
+            },
+            {
+                question: "21. Identify all modes of: 1, 2, 2, 3, 3, 3, 4, 4, 4, 5",
+                type: "text",
+                answer: "3,4",
+                explanation: "Both 3 and 4 appear three times (most frequently)."
+            },
+            {
+                question: "22. Class A (20 students) has mean score 75. Class B (30 students) has mean 82. Combined mean?",
+                type: "number",
+                answer: "79.2",
+                explanation: "Combined mean = [(20×75)+(30×82)]/50 = 3960/50 = 79.2."
+            },
+            {
+                question: "23. Find the median of: 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55",
+                type: "number",
+                answer: "30",
+                explanation: "For 11 values, median is the 6th value (30)."
+            },
+            {
+                question: "24. The mean of x, 2x, 3x is 12. Find x.",
+                type: "number",
+                answer: "6",
+                explanation: "(x + 2x + 3x)/3 = 12 → 6x = 36 → x = 6."
+            }
+        ];
+
+        // Quiz state variables
+        let currentSection = 'a';
+        let currentQuestion = 0;
+        let scoreA = 0;
+        let scoreB = 0;
+        let userAnswersA = new Array(sectionAQuestions.length).fill(null);
+        let userAnswersB = new Array(sectionBQuestions.length).fill(null);
+
+        // DOM elements
+        const introScreen = document.getElementById('intro-screen');
+        const quizContainer = document.getElementById('quiz-container');
+        const sectionADiv = document.getElementById('section-a');
+        const sectionBDiv = document.getElementById('section-b');
+        const questionsADiv = document.getElementById('questions-a');
+        const questionsBDiv = document.getElementById('questions-b');
+        const resultsScreen = document.getElementById('results-screen');
+        const finalScore = document.getElementById('final-score');
+        const sectionAScore = document.getElementById('section-a-score');
+        const sectionBScore = document.getElementById('section-b-score');
+        const detailedResults = document.getElementById('detailed-results');
+        const progressBar = document.getElementById('progress');
+        const prevButton = document.getElementById('prev-question');
+        const nextButton = document.getElementById('next-question');
+
+        // Event listeners
+        document.getElementById('start-quiz').addEventListener('click', startQuiz);
+        document.getElementById('restart-quiz').addEventListener('click', restartQuiz);
+        nextButton.addEventListener('click', nextQuestion);
+        prevButton.addEventListener('click', prevQuestion);
+
+        // Functions
+        function startQuiz() {
+            introScreen.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            sectionADiv.classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            // Update progress bar
+            const totalQuestions = sectionAQuestions.length + sectionBQuestions.length;
+            const answeredQuestions = currentSection === 'a' ? currentQuestion : sectionAQuestions.length + currentQuestion;
+            progressBar.style.width = `${(answeredQuestions / totalQuestions) * 100}%`;
+            
+            // Update navigation buttons
+            prevButton.disabled = currentSection === 'a' && currentQuestion === 0;
+            
+            if (currentSection === 'a') {
+                nextButton.textContent = currentQuestion === sectionAQuestions.length - 1 ? 'Next Section' : 'Next';
+            } else {
+                nextButton.textContent = currentQuestion === sectionBQuestions.length - 1 ? 'Submit' : 'Next';
+            }
+            
+            // Display current question
+            questionsADiv.innerHTML = '';
+            questionsBDiv.innerHTML = '';
+            
+            if (currentSection === 'a') {
+                const q = sectionAQuestions[currentQuestion];
+                const questionDiv = createQuestionDiv(q, currentQuestion, userAnswersA);
+                questionsADiv.appendChild(questionDiv);
+            } else {
+                const q = sectionBQuestions[currentQuestion];
+                const questionDiv = createQuestionDiv(q, currentQuestion, userAnswersB);
+                questionsBDiv.appendChild(questionDiv);
+            }
+        }
+
+        function createQuestionDiv(q, index, userAnswers) {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = q.question;
+            questionDiv.appendChild(questionText);
+            
+            const answerDiv = document.createElement('div');
+            answerDiv.className = 'options';
+            
+            const input = document.createElement('input');
+            input.type = q.type === 'number' ? 'number' : 'text';
+            input.id = 'answer-input';
+            input.value = userAnswers[index] || '';
+            answerDiv.appendChild(input);
+            
+            questionDiv.appendChild(answerDiv);
+            
+            // Show result if answer exists
+            if (userAnswers[index] !== null) {
+                const resultDiv = document.createElement('div');
+                const isCorrect = q.answer.toLowerCase() === userAnswers[index].toString().toLowerCase();
+                resultDiv.className = isCorrect ? 'result correct' : 'result incorrect';
+                resultDiv.textContent = isCorrect 
+                    ? 'Correct! ' + q.explanation 
+                    : `Incorrect. The correct answer is ${q.answer}. ${q.explanation}`;
+                questionDiv.appendChild(resultDiv);
+            }
+            
+            return questionDiv;
+        }
+
+        function nextQuestion() {
+            // Save answer
+            const input = document.getElementById('answer-input');
+            if (input) {
+                if (currentSection === 'a') {
+                    userAnswersA[currentQuestion] = input.value.trim();
+                } else {
+                    userAnswersB[currentQuestion] = input.value.trim();
+                }
+            }
+            
+            // Check if moving to next section
+            if (currentSection === 'a' && currentQuestion === sectionAQuestions.length - 1) {
+                currentSection = 'b';
+                currentQuestion = 0;
+                sectionADiv.classList.add('hidden');
+                sectionBDiv.classList.remove('hidden');
+                showQuestion();
+                return;
+            }
+            
+            // Check if submitting
+            if (currentSection === 'b' && currentQuestion === sectionBQuestions.length - 1) {
+                submitQuiz();
+                return;
+            }
+            
+            // Move to next question
+            currentQuestion++;
+            showQuestion();
+        }
+
+        function prevQuestion() {
+            // Save answer
+            const input = document.getElementById('answer-input');
+            if (input) {
+                if (currentSection === 'a') {
+                    userAnswersA[currentQuestion] = input.value.trim();
+                } else {
+                    userAnswersB[currentQuestion] = input.value.trim();
+                }
+            }
+            
+            // Check if moving to previous section
+            if (currentSection === 'b' && currentQuestion === 0) {
+                currentSection = 'a';
+                currentQuestion = sectionAQuestions.length - 1;
+                sectionBDiv.classList.add('hidden');
+                sectionADiv.classList.remove('hidden');
+                showQuestion();
+                return;
+            }
+            
+            // Move to previous question
+            currentQuestion--;
+            showQuestion();
+        }
+
+        function submitQuiz() {
+            // Calculate scores
+            scoreA = 0;
+            scoreB = 0;
+            
+            sectionAQuestions.forEach((q, index) => {
+                if (userAnswersA[index] && q.answer.toLowerCase() === userAnswersA[index].toString().toLowerCase()) {
+                    scoreA++;
+                }
+            });
+            
+            sectionBQuestions.forEach((q, index) => {
+                if (userAnswersB[index] && q.answer.toLowerCase() === userAnswersB[index].toString().toLowerCase()) {
+                    scoreB++;
+                }
+            });
+            
+            // Show results
+            quizContainer.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            finalScore.textContent = scoreA + scoreB;
+            sectionAScore.textContent = scoreA;
+            sectionBScore.textContent = scoreB;
+            
+            // Show detailed results
+            detailedResults.innerHTML = '';
+            
+            // Section A results
+            const sectionAResults = document.createElement('div');
+            sectionAResults.innerHTML = '<h3>Section A: Data Representation</h3>';
+            detailedResults.appendChild(sectionAResults);
+            
+            sectionAQuestions.forEach((q, index) => {
+                const resultDiv = createResultDiv(q, index, userAnswersA);
+                detailedResults.appendChild(resultDiv);
+            });
+            
+            // Section B results
+            const sectionBResults = document.createElement('div');
+            sectionBResults.innerHTML = '<h3>Section B: Central Tendency</h3>';
+            detailedResults.appendChild(sectionBResults);
+            
+            sectionBQuestions.forEach((q, index) => {
+                const resultDiv = createResultDiv(q, index, userAnswersB);
+                detailedResults.appendChild(resultDiv);
+            });
+        }
+
+        function createResultDiv(q, index, userAnswers) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'question';
+            
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = `${index + 1}. ${q.question}`;
+            resultDiv.appendChild(questionText);
+            
+            const userAnswer = document.createElement('div');
+            userAnswer.textContent = `Your answer: ${userAnswers[index] || 'Not answered'}`;
+            resultDiv.appendChild(userAnswer);
+            
+            const correctAnswer = document.createElement('div');
+            correctAnswer.textContent = `Correct answer: ${q.answer}`;
+            resultDiv.appendChild(correctAnswer);
+            
+            const explanation = document.createElement('div');
+            explanation.textContent = `Explanation: ${q.explanation}`;
+            resultDiv.appendChild(explanation);
+            
+            const isCorrect = userAnswers[index] && q.answer.toLowerCase() === userAnswers[index].toString().toLowerCase();
+            resultDiv.style.backgroundColor = isCorrect ? '#d4edda' : '#f8d7da';
+            resultDiv.style.padding = '10px';
+            resultDiv.style.marginBottom = '10px';
+            resultDiv.style.borderRadius = '5px';
+            
+            return resultDiv;
+        }
+
+        function restartQuiz() {
+            // Reset quiz state
+            currentSection = 'a';
+            currentQuestion = 0;
+            scoreA = 0;
+            scoreB = 0;
+            userAnswersA = new Array(sectionAQuestions.length).fill(null);
+            userAnswersB = new Array(sectionBQuestions.length).fill(null);
+            
+            // Show quiz again
+            resultsScreen.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            sectionADiv.classList.remove('hidden');
+            sectionBDiv.classList.add('hidden');
+            showQuestion();
+        }
+    </script>
+</body>
+</html>
